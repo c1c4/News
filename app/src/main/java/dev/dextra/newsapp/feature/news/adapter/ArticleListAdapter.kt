@@ -1,20 +1,17 @@
 package dev.dextra.newsapp.feature.news.adapter
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import androidx.recyclerview.widget.RecyclerView
 import dev.dextra.newsapp.R
 import dev.dextra.newsapp.api.model.Article
-import dev.dextra.newsapp.feature.news.NewsActivity
 import kotlinx.android.synthetic.main.item_article.view.*
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-class ArticleListAdapter(val listener: ArticleListAdapterItemListener) :
+class ArticleListAdapter(private val listener: ArticleListAdapterItemListener) :
     RecyclerView.Adapter<ArticleListAdapter.ArticlesListAdapterViewHolder>() {
 
     private val dateFormat = SimpleDateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.SHORT)
@@ -43,10 +40,6 @@ class ArticleListAdapter(val listener: ArticleListAdapterItemListener) :
 
     fun add(articles: List<Article>) {
         dataset.addAll(articles)
-    }
-
-    fun clear() {
-        dataset.clear()
     }
 
     class ArticlesListAdapterViewHolder(val view: View) : RecyclerView.ViewHolder(view)

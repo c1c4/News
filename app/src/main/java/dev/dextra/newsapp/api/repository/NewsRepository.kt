@@ -1,5 +1,6 @@
 package dev.dextra.newsapp.api.repository
 
+import dev.dextra.newsapp.PAGE_SIZE
 import dev.dextra.newsapp.api.model.ArticlesResponse
 import dev.dextra.newsapp.api.model.SourceResponse
 import dev.dextra.newsapp.base.repository.EndpointService
@@ -12,7 +13,7 @@ class NewsRepository(endpointService: EndpointService) : Repository<NewsEndpoint
         return schedule(getEndpoint().getSources(country, category))
     }
 
-    fun getEverything(sources: String?, page: Int = 1, pageSize: Int = 20): Single<ArticlesResponse> {
+    fun getEverything(sources: String?, page: Int = 1, pageSize: Int = PAGE_SIZE): Single<ArticlesResponse> {
         return schedule(getEndpoint().getEverything(sources, page, pageSize))
     }
 }

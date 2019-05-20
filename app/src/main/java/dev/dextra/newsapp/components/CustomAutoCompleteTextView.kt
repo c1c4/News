@@ -1,5 +1,6 @@
 package dev.dextra.newsapp.components
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
@@ -44,6 +45,7 @@ class CustomAutoCompleteTextView : AppCompatAutoCompleteTextView {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         performFiltering("", 0)
         showDropDown()

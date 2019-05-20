@@ -16,6 +16,7 @@ import dev.dextra.newsapp.api.model.Source
 import dev.dextra.newsapp.api.repository.NewsRepository
 import dev.dextra.newsapp.base.BaseListActivity
 import dev.dextra.newsapp.base.repository.EndpointService
+import dev.dextra.newsapp.components.LoadPageScrollListener
 import dev.dextra.newsapp.feature.news.adapter.ArticleListAdapter
 import kotlinx.android.synthetic.main.activity_news.*
 import org.koin.android.ext.android.inject
@@ -23,7 +24,7 @@ import org.koin.android.ext.android.inject
 
 const val NEWS_ACTIVITY_SOURCE = "NEWS_ACTIVITY_SOURCE"
 
-class NewsActivity : BaseListActivity(), ArticleListAdapter.ArticleListAdapterItemListener {
+class NewsActivity : BaseListActivity(), ArticleListAdapter.ArticleListAdapterItemListener, LoadPageScrollListener.LoadPageScrollLoadMoreListener {
 
     override val emptyStateTitle: Int = R.string.empty_state_title_source
     override val emptyStateSubTitle: Int = R.string.empty_state_subtitle_source
@@ -32,10 +33,11 @@ class NewsActivity : BaseListActivity(), ArticleListAdapter.ArticleListAdapterIt
     override val mainList: View
         get() = news_list
 
-    val articlesViewModel: NewsViewModel by inject()
+    private val articlesViewModel: NewsViewModel by inject()
 
     private var viewAdapter: ArticleListAdapter = ArticleListAdapter(this)
     private var viewManager: RecyclerView.LayoutManager = GridLayoutManager(this, 1)
+    private var pageScroll: LoadPageScrollListener = LoadPageScrollListener(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setContentView(R.layout.activity_news)
@@ -67,22 +69,25 @@ class NewsActivity : BaseListActivity(), ArticleListAdapter.ArticleListAdapterIt
         }
     }
 
+    override fun onLoadMore(currentPage: Int, totalItemCount: Int, recyclerView: RecyclerView) {
+        articlesViewModel.loadNews(currentPage)
+        println(totalItemCount)
+    }
+
     private fun setupList() {
         news_list.apply {
             setHasFixedSize(true)
             layoutManager = viewManager
             adapter = viewAdapter
+            addOnScrollListener(pageScroll)
         }
     }
 
     private fun loadNews(source: Source) {
         articlesViewModel.articles.observe(this, Observer {
             viewAdapter.apply {
-                clear()
-                notifyDataSetChanged()
                 add(it)
                 notifyDataSetChanged()
-                news_list.scrollToPosition(0)
             }
         })
 
