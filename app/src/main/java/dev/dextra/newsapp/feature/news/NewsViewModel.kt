@@ -25,7 +25,7 @@ class NewsViewModel(private val newsRepository: NewsRepository) : BaseViewModel(
             newsRepository.getEverything(source!!.id, page).subscribe({
                 articles.postValue(it.articles)
                 if (it.articles.isEmpty()) {
-                    networkState.postValue(NetworkState.ERROR)
+                    networkState.postValue(NetworkState.EMPTY)
                 } else {
                     networkState.postValue(NetworkState.SUCCESS)
                 }
