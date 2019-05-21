@@ -22,7 +22,7 @@ class NewsViewModel(private val newsRepository: NewsRepository) : BaseViewModel(
     fun loadNews(page: Int = 1) {
         networkState.postValue(NetworkState.RUNNING)
         addDisposable(
-            newsRepository.getEverything(source!!.id, page).subscribe({
+            newsRepository.getEverything(source?.id, page).subscribe({
                 articles.postValue(it.articles)
                 if (it.articles.isEmpty()) {
                     networkState.postValue(NetworkState.EMPTY)
