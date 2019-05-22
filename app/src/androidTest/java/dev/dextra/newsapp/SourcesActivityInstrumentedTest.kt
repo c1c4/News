@@ -1,11 +1,19 @@
 package dev.dextra.newsapp
 
+import android.app.Activity
+import android.app.Instrumentation.ActivityResult
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onData
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition
 import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.Intents.intended
+import androidx.test.espresso.intent.Intents.intending
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasExtraWithKey
 import androidx.test.espresso.matcher.RootMatchers
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -20,17 +28,18 @@ import dev.dextra.newsapp.base.BaseInstrumentedTest
 import dev.dextra.newsapp.base.FileUtils
 import dev.dextra.newsapp.base.TestSuite
 import dev.dextra.newsapp.base.mock.endpoint.ResponseHandler
+import dev.dextra.newsapp.feature.news.NEWS_ACTIVITY_SOURCE
+import dev.dextra.newsapp.feature.news.NewsActivity
 import dev.dextra.newsapp.feature.sources.SourcesActivity
 import dev.dextra.newsapp.utils.JsonUtils
 import okhttp3.Request
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.not
+import org.hamcrest.CoreMatchers.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.RuntimeException
+
 
 @RunWith(AndroidJUnit4::class)
 class SourcesActivityInstrumentedTest : BaseInstrumentedTest() {
@@ -77,52 +86,34 @@ class SourcesActivityInstrumentedTest : BaseInstrumentedTest() {
         waitLoading()
 
         //select Brazil in the country list
-        onView(withId(R.id.country_select)).perform(ViewActions.click())
+        onView(withId(R.id.country_select)).perform(click())
         onData(equalTo(Country.BR)).inRoot(RootMatchers.isPlatformPopup()).perform(click())
 
-        waitLoading()
-
-        //check if the Sources list is displayed with the correct item and the empty and error states are hidden
-        onView(withId(R.id.sources_list)).check(matches(isDisplayed()))
-        onView(withId(R.id.error_state)).check(matches(not(isDisplayed())))
-        onView(withId(R.id.empty_state)).check(matches(not(isDisplayed())))
+        testSuccessState()
         onView(ViewMatchers.withChild(ViewMatchers.withText("Test Brazil"))).check(matches(isDisplayed()))
 
         //select United States in the country list
-        onView(withId(R.id.country_select)).perform(ViewActions.click())
+        onView(withId(R.id.country_select)).perform(click())
         onData(equalTo(Country.US)).inRoot(RootMatchers.isPlatformPopup()).perform(click())
 
-        waitLoading()
-
-        //check if the empty state is displayed with the correct item and the source list and error state are hidden
-        onView(withId(R.id.empty_state)).check(matches(isDisplayed()))
-        onView(withId(R.id.error_state)).check(matches(not(isDisplayed())))
-        onView(withId(R.id.sources_list)).check(matches(not(isDisplayed())))
+        testEmptyState()
 
         //select Canada in the country list
-        onView(withId(R.id.country_select)).perform(ViewActions.click())
+        onView(withId(R.id.country_select)).perform(click())
         onData(equalTo(Country.CA)).inRoot(RootMatchers.isPlatformPopup()).perform(click())
 
-        waitLoading()
+        testErrorState()
 
-        //check if the error state is displayed with the correct item and the source list and empty state are hidden
-        onView(withId(R.id.error_state)).check(matches(isDisplayed()))
-        onView(withId(R.id.empty_state)).check(matches(not(isDisplayed())))
-        onView(withId(R.id.sources_list)).check(matches(not(isDisplayed())))
 
         //clear the mocks to use just the json files
         TestSuite.clearEndpointMocks()
 
         //retry in the error state
-        onView(withId(R.id.error_state_retry)).perform(ViewActions.click())
+        onView(withId(R.id.error_state_retry)).perform(click())
 
         waitLoading()
 
-        //check if the Sources list is displayed and the empty and error states are hidden
-        onView(withId(R.id.sources_list)).check(matches(isDisplayed()))
-        onView(withId(R.id.error_state)).check(matches(not(isDisplayed())))
-        onView(withId(R.id.empty_state)).check(matches(not(isDisplayed())))
-
+        testSuccessState()
     }
 
     @Test
@@ -140,17 +131,71 @@ class SourcesActivityInstrumentedTest : BaseInstrumentedTest() {
         waitLoading()
 
         //select the Business category
-        onView(withId(R.id.category_select)).perform(ViewActions.click())
+        onView(withId(R.id.category_select)).perform(click())
         onData(equalTo(Category.BUSINESS)).inRoot(RootMatchers.isPlatformPopup()).perform(click())
+        testSuccessState()
+        onView(ViewMatchers.withChild(ViewMatchers.withText("Test Brazil"))).check(matches(isDisplayed()))
+
+    }
+
+    @Test
+    fun testOpenNewsActivity() {
+        TestSuite.mock(TestConstants.sourcesURL).body(object : ResponseHandler {
+            override fun getResponse(request: Request, path: String): String {
+                return request.url().queryParameter("country").let {
+                    JsonUtils.toJson(brazilResponse)
+                }
+            }
+        }).apply()
+
 
         waitLoading()
 
-        //check if the Sources list is displayed with the correct item and the empty and error states are hidden
+        //select Brazil in the country list
+        onView(withId(R.id.country_select)).perform(click())
+        onData(equalTo(Country.BR)).inRoot(RootMatchers.isPlatformPopup()).perform(click())
+
+        waitLoading()
+
+        val matcher = allOf(
+            hasComponent(NewsActivity::class.java!!.name),
+            hasExtraWithKey(NEWS_ACTIVITY_SOURCE)
+        )
+
+        val result = ActivityResult(Activity.RESULT_OK, null)
+
+        intending(matcher).respondWith(result)
+
+        onView(withId(R.id.sources_list)).check(matches(isDisplayed())).perform(actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
+        intended(matcher)
+    }
+
+    private fun testSuccessState() {
+        waitLoading()
+
+        //check if the Sources list is displayed and the empty and error states are hidden
         onView(withId(R.id.sources_list)).check(matches(isDisplayed()))
         onView(withId(R.id.error_state)).check(matches(not(isDisplayed())))
         onView(withId(R.id.empty_state)).check(matches(not(isDisplayed())))
-        onView(ViewMatchers.withChild(ViewMatchers.withText("Test Brazil"))).check(matches(isDisplayed()))
 
+    }
+
+    private fun testEmptyState() {
+        waitLoading()
+
+        //check if the empty state is displayed with the correct item and the source list and error state are hidden
+        onView(withId(R.id.empty_state)).check(matches(isDisplayed()))
+        onView(withId(R.id.error_state)).check(matches(not(isDisplayed())))
+        onView(withId(R.id.sources_list)).check(matches(not(isDisplayed())))
+    }
+
+    private fun testErrorState() {
+        waitLoading()
+
+        //check if the error state is displayed with the correct item and the source list and empty state are hidden
+        onView(withId(R.id.error_state)).check(matches(isDisplayed()))
+        onView(withId(R.id.empty_state)).check(matches(not(isDisplayed())))
+        onView(withId(R.id.sources_list)).check(matches(not(isDisplayed())))
     }
 
 

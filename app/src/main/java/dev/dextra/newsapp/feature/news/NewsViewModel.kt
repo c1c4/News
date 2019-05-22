@@ -12,6 +12,7 @@ class NewsViewModel(private val newsRepository: NewsRepository) : BaseViewModel(
 
     val articles = MutableLiveData<List<Article>>()
     val networkState = MutableLiveData<NetworkState>()
+    var totalResults: Int = 0
 
     private var source: Source? = null
 
@@ -23,6 +24,7 @@ class NewsViewModel(private val newsRepository: NewsRepository) : BaseViewModel(
         networkState.postValue(NetworkState.RUNNING)
         addDisposable(
             newsRepository.getEverything(source?.id, page).subscribe({
+                totalResults = it.totalResults
                 articles.postValue(it.articles)
                 if (it.articles.isEmpty()) {
                     networkState.postValue(NetworkState.EMPTY)

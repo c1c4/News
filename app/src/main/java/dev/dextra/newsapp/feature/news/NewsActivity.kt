@@ -1,21 +1,16 @@
 package dev.dextra.newsapp.feature.news
 
-import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.view.Window
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.dextra.newsapp.R
 import dev.dextra.newsapp.api.model.Article
 import dev.dextra.newsapp.api.model.Source
-import dev.dextra.newsapp.api.repository.NewsRepository
 import dev.dextra.newsapp.base.BaseListActivity
-import dev.dextra.newsapp.base.repository.EndpointService
 import dev.dextra.newsapp.components.LoadPageScrollListener
 import dev.dextra.newsapp.feature.news.adapter.ArticleListAdapter
 import kotlinx.android.synthetic.main.activity_news.*
@@ -26,10 +21,10 @@ const val NEWS_ACTIVITY_SOURCE = "NEWS_ACTIVITY_SOURCE"
 
 class NewsActivity : BaseListActivity(), ArticleListAdapter.ArticleListAdapterItemListener, LoadPageScrollListener.LoadPageScrollLoadMoreListener {
 
-    override val emptyStateTitle: Int = R.string.empty_state_title_source
-    override val emptyStateSubTitle: Int = R.string.empty_state_subtitle_source
-    override val errorStateTitle: Int = R.string.error_state_title_source
-    override val errorStateSubTitle: Int = R.string.error_state_subtitle_source
+    override val emptyStateTitle: Int = R.string.empty_state_title_news
+    override val emptyStateSubTitle: Int = R.string.empty_state_subtitle_news
+    override val errorStateTitle: Int = R.string.error_state_title_news
+    override val errorStateSubTitle: Int = R.string.error_state_subtitle_news
     override val mainList: View
         get() = news_list
 
@@ -70,8 +65,8 @@ class NewsActivity : BaseListActivity(), ArticleListAdapter.ArticleListAdapterIt
     }
 
     override fun onLoadMore(currentPage: Int, totalItemCount: Int, recyclerView: RecyclerView) {
-        articlesViewModel.loadNews(currentPage)
-        println(totalItemCount)
+        if (totalItemCount < articlesViewModel.totalResults)
+            articlesViewModel.loadNews(currentPage)
     }
 
     private fun setupList() {
