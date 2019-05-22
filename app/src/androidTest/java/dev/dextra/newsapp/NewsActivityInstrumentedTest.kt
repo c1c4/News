@@ -1,12 +1,16 @@
 package dev.dextra.newsapp
 
 import android.content.Intent
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import dev.dextra.newsapp.api.model.ArticlesResponse
 import dev.dextra.newsapp.api.model.Source
@@ -19,15 +23,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import androidx.test.InstrumentationRegistry.getTargetContext
-import androidx.test.platform.app.InstrumentationRegistry
-import dev.dextra.newsapp.api.model.Article
 
 
 @RunWith(AndroidJUnit4::class)
 class NewsActivityInstrumentedTest : BaseInstrumentedTest() {
-    private val sourceMock = Source("general", "us", "Your trusted source for breaking news, analysis, exclusive interviews, headlines, and videos at ABCNews.com.",
-        "abc-news", "en", "ABC News",  "https://abcnews.go.com")
+    private val emptyResponse = ArticlesResponse(ArrayList(), "ok", 0)
+    private val sourceMock = Source("cat", "BR", "Test Brazil Description", "1234", "PT", "Test Brazil", "http://www.google.com.br")
 
     @get:Rule
     val activityRule = ActivityTestRule(NewsActivity::class.java, false, false)
@@ -47,6 +48,16 @@ class NewsActivityInstrumentedTest : BaseInstrumentedTest() {
         onView(withId(R.id.news_list)).check(matches(isDisplayed()))
         onView(withId(R.id.error_state)).check(matches(not(isDisplayed())))
         onView(withId(R.id.empty_state)).check(matches(not(isDisplayed())))
+    }
+
+    @Test
+    fun testEmptyViewDisplay() {
+        onView(withId(R.id.news_list)).check(matches(isDisplayed())).perform(
+            RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(
+                0,
+                click()
+            )
+        )
     }
 
     @After
